@@ -1,20 +1,64 @@
 <script lang="ts">
-  import { Calendar, CircleUser, Menu, Search } from 'lucide-svelte';
+  import { Calendar, CircleUser, Menu, Search, X } from 'lucide-svelte';
   import { AppBar } from '@skeletonlabs/skeleton-svelte'
+
+  let drawerOpen = false;
+
+  function toggleDrawer() {
+    drawerOpen = !drawerOpen;
+  }
+
+  function closeDrawer() {
+    drawerOpen = false;
+  }
 </script>
 
 <AppBar>
   	<AppBar.Toolbar class="grid-cols-[auto_1fr_auto]">
 		<AppBar.Lead>
-			<button type="button" class="btn-icon btn-icon-lg hover:preset-tonal"><Menu /></button>
+			<button type="button" class="btn-icon btn-icon-lg hover:preset-tonal" on:click={toggleDrawer}>
+				<Menu />
+			</button>
 		</AppBar.Lead>
 		<AppBar.Headline>
-			<p class="text-2xl font-bold">MARGIE</p>
+			<a href="/" class="text-2xl font-bold hover:text-primary-600 transition-colors cursor-pointer">MARGIE</a>
 		</AppBar.Headline>
 		<AppBar.Trail>
-			<button type="button" class="btn-icon hover:preset-tonal"><Search class="size-6" /></button>
-			<button type="button" class="btn-icon hover:preset-tonal"><Calendar class="size-6" /></button>
-			<button type="button" class="btn-icon hover:preset-tonal"><CircleUser class="size-6" /></button>
+			<a href="/profile/" class="btn-icon hover:preset-tonal"><CircleUser class="size-6" /></a>
 		</AppBar.Trail>
 	</AppBar.Toolbar>
 </AppBar>
+
+<!-- Backdrop -->
+{#if drawerOpen}
+	<div
+		class="fixed inset-0 bg-black/50 z-40 transition-opacity"
+		on:click={closeDrawer}
+		role="button"
+		tabindex="0"
+		on:keydown={(e) => e.key === 'Escape' && closeDrawer()}
+	></div>
+{/if}
+
+<!-- Drawer -->
+<div
+	class="fixed top-0 left-0 h-full w-64 bg-surface-100 dark:bg-surface-800 shadow-xl z-50 transform transition-transform duration-300 {drawerOpen ? 'translate-x-0' : '-translate-x-full'}"
+>
+	<div class="p-4 space-y-4">
+		<div class="flex items-center justify-between mb-6">
+			<h2 class="text-2xl font-bold">Menu</h2>
+			<button type="button" class="btn-icon hover:preset-tonal" on:click={closeDrawer}>
+				<X />
+			</button>
+		</div>
+
+		<nav class="space-y-2">
+			<a href="/methods" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors">
+				<p class="text-lg font-semibold">Methods</p>
+			</a>
+			<a href="/contributors" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors">
+				<p class="text-lg font-semibold">Contributors</p>
+			</a>
+		</nav>
+	</div>
+</div>
