@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Navibar from "$lib/Navibar.svelte";
 	import { Download, Share2, AlertCircle } from 'lucide-svelte';
 
 	// Mock data for the graph
@@ -20,8 +19,6 @@
 		alert('Sharing results...');
 	}
 </script>
-
-<Navibar/>
 
 <div class="container mx-auto p-8 space-y-8 max-w-6xl">
 	<!-- Page Header -->

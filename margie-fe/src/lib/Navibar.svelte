@@ -53,11 +53,41 @@
 		</div>
 
 		<nav class="space-y-2">
-			<a href="/methods" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors">
+			<a href="/" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Home</p>
+			</a>
+			<a href="/analyze" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Analyze</p>
+			</a>
+			<a href="/filesearch" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">File Search</p>
+			</a>
+			<a href="/run_script" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Run Script</p>
+			</a>
+
+			<div class="border-t border-surface-300 dark:border-surface-600 my-2"></div>
+
+			<a href="/results/mock" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Results (Mock)</p>
+			</a>
+			<a href="/results/historical" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Results (Historical)</p>
+			</a>
+
+			<div class="border-t border-surface-300 dark:border-surface-600 my-2"></div>
+
+			<a href="/methods" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
 				<p class="text-lg font-semibold">Methods</p>
 			</a>
-			<a href="/contributors" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors">
+			<a href="/contributors" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
 				<p class="text-lg font-semibold">Contributors</p>
+			</a>
+			<a href="/dane" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Dane</p>
+			</a>
+			<a href="/profile" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Profile</p>
 			</a>
 		</nav>
 	</div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Navibar from "$lib/Navibar.svelte";
 	import { Upload } from 'lucide-svelte';
 
 	// SSH Credentials
@@ -96,8 +95,6 @@
 		alert('Profile settings would be saved here!');
 	}
 </script>
-
-<Navibar/>
 
 <div class="container mx-auto p-8 space-y-8 max-w-4xl">
 	<!-- Page Header -->

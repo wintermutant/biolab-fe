@@ -1,6 +1,5 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-	import Navibar from "$lib/Navibar.svelte";
 	import { Upload } from 'lucide-svelte';
 
 	let files: FileList | undefined;
@@ -45,8 +44,6 @@
 		alert('Would navigate to /history');
 	}
 </script>
-
-<Navibar/>
 
 <!-- Under Construction Banner -->
 <div class="bg-warning-500/20 border-y-4 border-warning-500 py-4">

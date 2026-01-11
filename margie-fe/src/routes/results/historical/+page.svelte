@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Navibar from "$lib/Navibar.svelte";
 	import { Search, Filter } from 'lucide-svelte';
 
 	// Mock historical results data
@@ -71,8 +70,6 @@
 		window.location.href = `/results/current?id=${id}`;
 	}
 </script>
-
-<Navibar/>
 
 <div class="container mx-auto p-8 space-y-8 max-w-6xl">
 	<!-- Page Header -->
