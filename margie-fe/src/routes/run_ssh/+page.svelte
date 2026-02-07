@@ -23,7 +23,7 @@
 			error = '';
 			result = null;
 
-			const response = await fetch(`${API_URL}/v1/example/run_ssh`, {
+			const response = await fetch(`${API_URL}/v1/ssh/run_ssh`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

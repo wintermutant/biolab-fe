@@ -1,454 +1,317 @@
 <script lang="ts">
-	import { Upload } from 'lucide-svelte';
+	import { onMount } from 'svelte';
 
-	// SSH Credentials
-	let sshUsername = '';
-	let sshHost = '';
-	let sshPublicKey = '';
+	const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+		? 'http://localhost:8000'
+		: '';
 
-	// Resources Configuration
-	let maxCpuCores = 8;
-	let maxMemoryGB = 16;
-	let maxStorageGB = 100;
+	let config = $state<Record<string, any>>({});
+	let loading = $state(false);
+	let saving = $state(false);
+	let error = $state('');
+	let success = $state('');
+	let connected = $state(false);
+	let checking = $state(true);
+	let sshUsername = $state('');
+	let sshPublicKey = $state('');
 
-	// Logging Configuration
-	let logLevel = 'info';
-	let logRetentionDays = 30;
-	let enableDebugMode = false;
+	onMount(async () => {
+		await checkConnection();
+	});
 
-	// Program-Specific Configuration
-	// genotator
-	let genotatorEnabled = true;
-	let genotatorVersion = '2.1.0';
-	let genotatorThreads = 4;
-	let genotatorMinScore = 0.75;
-
-	// metaspades
-	let metaspadesEnabled = true;
-	let metaspadesKmerSize = 21;
-	let metaspadesMemoryLimit = 32;
-	let metaspadesCareful = true;
-
-	// prodigal
-	let prodigalEnabled = true;
-	let prodigalMode = 'meta';
-	let prodigalClosedEnds = false;
-	let prodigalTransTable = 11;
-
-	// RAST
-	let rastEnabled = true;
-	let rastDomain = 'Bacteria';
-	let rastGeneticCode = 11;
-	let rastFixErrors = true;
-
-	// tigrfam
-	let tigrfamEnabled = true;
-	let tigrfamCutoff = '1e-5';
-	let tigrfamCoverage = 0.8;
-	let tigrfamHmmerThreads = 8;
-
-	// File upload
-	let isDragging = false;
-	let configFile: File | null = null;
-
-	function handleDragOver(e: DragEvent) {
-		e.preventDefault();
-		isDragging = true;
-	}
-
-	function handleDragLeave(e: DragEvent) {
-		e.preventDefault();
-		isDragging = false;
-	}
-
-	function handleDrop(e: DragEvent) {
-		e.preventDefault();
-		isDragging = false;
-		const files = e.dataTransfer?.files;
-		if (files && files.length > 0) {
-			configFile = files[0];
-			parseConfigFile(configFile);
+	async function checkConnection() {
+		checking = true;
+		error = '';
+		try {
+			const res = await fetch(`${API_URL}/v1/ssh/status`);
+			if (!res.ok) throw new Error('Could not reach backend');
+			const data = await res.json();
+			connected = data.connected;
+			if (connected) {
+				await loadConfig();
+			}
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to check SSH connection';
+			connected = false;
+		} finally {
+			checking = false;
 		}
 	}
 
-	function handleFileSelect(e: Event) {
-		const target = e.target as HTMLInputElement;
-		if (target.files && target.files.length > 0) {
-			configFile = target.files[0];
-			parseConfigFile(configFile);
+	async function connect() {
+		if (!sshUsername.trim()) {
+			error = 'Please enter a username';
+			return;
+		}
+		if (!sshPublicKey.trim()) {
+			error = 'Please provide a public key path';
+			return;
+		}
+		checking = true;
+		error = '';
+		try {
+			const res = await fetch(`${API_URL}/v1/ssh/connect`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					username: sshUsername,
+					public_key: sshPublicKey
+				})
+			});
+			if (!res.ok) throw new Error('Failed to establish SSH connection');
+			connected = true;
+			await loadConfig();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to connect';
+		} finally {
+			checking = false;
 		}
 	}
 
-	async function parseConfigFile(file: File) {
-		// TODO: Parse YAML file and populate fields
-		const text = await file.text();
-		console.log('Config file content:', text);
-		alert(`Config file "${file.name}" uploaded! In production, this would parse the YAML and populate all fields.`);
-
-		// Mock population - in real implementation, parse YAML here
-		// Example: use js-yaml library to parse and populate fields
+	async function loadConfig() {
+		loading = true;
+		error = '';
+		try {
+			const res = await fetch(`${API_URL}/v1/ssh/config`);
+			if (!res.ok) throw new Error('Failed to load config');
+			config = await res.json();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to load config';
+		} finally {
+			loading = false;
+		}
 	}
 
-	function saveProfile() {
-		// TODO: API call to save profile settings
-		console.log('Saving profile...');
-		alert('Profile settings would be saved here!');
+	async function saveConfig() {
+		saving = true;
+		error = '';
+		success = '';
+		try {
+			const res = await fetch(`${API_URL}/v1/config`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(config)
+			});
+			if (!res.ok) throw new Error('Failed to save config');
+			success = 'Configuration saved successfully.';
+			setTimeout(() => success = '', 3000);
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to save config';
+		} finally {
+			saving = false;
+		}
+	}
+
+	function isObject(val: any): val is Record<string, any> {
+		return val !== null && typeof val === 'object' && !Array.isArray(val);
+	}
+
+	function removeItem(arr: any[], index: number) {
+		arr.splice(index, 1);
+		config = { ...config };
+	}
+
+	function addItem(arr: any[]) {
+		arr.push('');
+		config = { ...config };
 	}
 </script>
 
-<div class="container mx-auto p-8 space-y-8 max-w-4xl">
-	<!-- Page Header -->
+<div class="container mx-auto p-8 max-w-4xl space-y-8">
 	<section class="text-center py-8">
 		<h1 class="text-4xl font-bold text-primary-500 mb-4">Profile Settings</h1>
-		<p class="text-lg text-surface-600 dark:text-surface-300">Manage your SSH credentials and configuration settings</p>
-	</section>
-
-	<!-- SSH Credentials Section -->
-	<section class="card p-6 bg-surface-100 dark:bg-surface-800">
-		<h2 class="text-2xl font-bold mb-6 text-primary-500">SSH Credentials</h2>
-
-		<div class="space-y-4">
-			<!-- SSH Username -->
-			<div>
-				<label for="sshUsername" class="block text-sm font-semibold mb-2">SSH Username</label>
-				<input
-					id="sshUsername"
-					type="text"
-					bind:value={sshUsername}
-					placeholder="Enter your SSH username"
-					class="input w-full px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-				/>
-			</div>
-
-			<!-- SSH Host -->
-			<div>
-				<label for="sshHost" class="block text-sm font-semibold mb-2">SSH Host</label>
-				<input
-					id="sshHost"
-					type="text"
-					bind:value={sshHost}
-					placeholder="e.g., example.server.com"
-					class="input w-full px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-				/>
-			</div>
-
-			<!-- SSH Public Key -->
-			<div>
-				<label for="sshPublicKey" class="block text-sm font-semibold mb-2">SSH Public Key</label>
-				<textarea
-					id="sshPublicKey"
-					bind:value={sshPublicKey}
-					placeholder="Paste your SSH public key here (e.g., ssh-rsa AAAA...)"
-					rows="4"
-					class="input w-full px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600 font-mono text-sm"
-				></textarea>
-				<p class="text-xs text-surface-500 mt-2">Your public key will be used for secure authentication</p>
-			</div>
-		</div>
-	</section>
-
-	<!-- Config File Upload Section -->
-	<section class="card p-6 bg-surface-100 dark:bg-surface-800">
-		<h2 class="text-2xl font-bold mb-6 text-primary-500">Upload Configuration File</h2>
-
-		<!-- Drag & Drop Zone -->
-		<div
-			class="border-2 border-dashed rounded-lg p-8 text-center transition-colors {isDragging ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20' : 'border-surface-400 dark:border-surface-600'}"
-			on:dragover={handleDragOver}
-			on:dragleave={handleDragLeave}
-			on:drop={handleDrop}
-		>
-			<Upload class="mx-auto mb-4 size-12 text-surface-500" />
-			<p class="text-lg mb-2 font-semibold">Drag & Drop config.yaml Here</p>
-			<p class="text-surface-600 dark:text-surface-400 mb-4">or</p>
-			<label class="btn variant-filled-secondary cursor-pointer">
-				<input
-					type="file"
-					accept=".yaml,.yml"
-					class="hidden"
-					on:change={handleFileSelect}
-				/>
-				Browse Files
-			</label>
-			{#if configFile}
-				<div class="mt-4 p-3 bg-success-100 dark:bg-success-900/20 rounded-lg">
-					<p class="text-sm text-success-700 dark:text-success-300">
-						Uploaded: <strong>{configFile.name}</strong>
-					</p>
-				</div>
-			{/if}
-		</div>
-	</section>
-
-	<!-- Configuration Settings Section -->
-	<section class="card p-6 bg-surface-100 dark:bg-surface-800">
-		<h2 class="text-2xl font-bold mb-6 text-secondary-500">Configuration Settings</h2>
-
-		<!-- Resources Subsection -->
-		<div class="mb-8">
-			<h3 class="text-xl font-semibold mb-4 text-tertiary-500 border-b border-surface-300 dark:border-surface-600 pb-2">Resources</h3>
-
-			<div class="space-y-4">
-				<!-- Max CPU Cores -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-					<label for="maxCpuCores" class="text-sm font-semibold">Maximum CPU Cores</label>
-					<input
-						id="maxCpuCores"
-						type="number"
-						bind:value={maxCpuCores}
-						min="1"
-						max="64"
-						class="input px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-					/>
-				</div>
-
-				<!-- Max Memory -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-					<label for="maxMemoryGB" class="text-sm font-semibold">Maximum Memory (GB)</label>
-					<input
-						id="maxMemoryGB"
-						type="number"
-						bind:value={maxMemoryGB}
-						min="1"
-						max="256"
-						class="input px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-					/>
-				</div>
-
-				<!-- Max Storage -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-					<label for="maxStorageGB" class="text-sm font-semibold">Maximum Storage (GB)</label>
-					<input
-						id="maxStorageGB"
-						type="number"
-						bind:value={maxStorageGB}
-						min="1"
-						max="1000"
-						class="input px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-					/>
-				</div>
-			</div>
-		</div>
-
-		<!-- Logging Subsection -->
-		<div class="mb-8">
-			<h3 class="text-xl font-semibold mb-4 text-tertiary-500 border-b border-surface-300 dark:border-surface-600 pb-2">Logging</h3>
-
-			<div class="space-y-4">
-				<!-- Log Level -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-					<label for="logLevel" class="text-sm font-semibold">Log Level</label>
-					<select
-						id="logLevel"
-						bind:value={logLevel}
-						class="input px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-					>
-						<option value="debug">Debug</option>
-						<option value="info">Info</option>
-						<option value="warning">Warning</option>
-						<option value="error">Error</option>
-					</select>
-				</div>
-
-				<!-- Log Retention -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-					<div>
-						<label for="logRetentionDays" class="text-sm font-semibold">Log Retention (Days)</label>
-						<p class="text-xs text-surface-500">How long to keep log files</p>
-					</div>
-					<input
-						id="logRetentionDays"
-						type="number"
-						bind:value={logRetentionDays}
-						min="1"
-						max="365"
-						class="input px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
-					/>
-				</div>
-
-				<!-- Debug Mode -->
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-					<div>
-						<label for="enableDebugMode" class="text-sm font-semibold">Enable Debug Mode</label>
-						<p class="text-xs text-surface-500">Verbose logging for troubleshooting</p>
-					</div>
-					<label class="flex items-center gap-2">
-						<input
-							id="enableDebugMode"
-							type="checkbox"
-							bind:checked={enableDebugMode}
-							class="checkbox"
-						/>
-						<span class="text-sm">{enableDebugMode ? 'Enabled' : 'Disabled'}</span>
-					</label>
-				</div>
-			</div>
-		</div>
-
-		<!-- Program Settings Subsection with Accordion -->
-		<div>
-			<h3 class="text-xl font-semibold mb-4 text-tertiary-500 border-b border-surface-300 dark:border-surface-600 pb-2">Program Settings</h3>
-
-			<div class="space-y-3">
-				<!-- genotator -->
-				<details class="group bg-surface-200 dark:bg-surface-700 rounded-lg">
-					<summary class="cursor-pointer p-4 font-semibold flex justify-between items-center hover:bg-surface-300 dark:hover:bg-surface-600 rounded-lg transition-colors">
-						<span>genotator</span>
-						<span class="transform transition-transform group-open:rotate-180">▼</span>
-					</summary>
-					<div class="p-4 pt-0 space-y-3">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Enabled</label>
-							<input type="checkbox" bind:checked={genotatorEnabled} class="checkbox" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Version</label>
-							<input type="text" bind:value={genotatorVersion} class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Threads</label>
-							<input type="number" bind:value={genotatorThreads} min="1" max="32" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Minimum Score</label>
-							<input type="number" bind:value={genotatorMinScore} min="0" max="1" step="0.01" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-					</div>
-				</details>
-
-				<!-- metaspades -->
-				<details class="group bg-surface-200 dark:bg-surface-700 rounded-lg">
-					<summary class="cursor-pointer p-4 font-semibold flex justify-between items-center hover:bg-surface-300 dark:hover:bg-surface-600 rounded-lg transition-colors">
-						<span>metaspades</span>
-						<span class="transform transition-transform group-open:rotate-180">▼</span>
-					</summary>
-					<div class="p-4 pt-0 space-y-3">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Enabled</label>
-							<input type="checkbox" bind:checked={metaspadesEnabled} class="checkbox" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">K-mer Size</label>
-							<input type="number" bind:value={metaspadesKmerSize} min="1" max="127" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Memory Limit (GB)</label>
-							<input type="number" bind:value={metaspadesMemoryLimit} min="1" max="256" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Careful Mode</label>
-							<input type="checkbox" bind:checked={metaspadesCareful} class="checkbox" />
-						</div>
-					</div>
-				</details>
-
-				<!-- prodigal -->
-				<details class="group bg-surface-200 dark:bg-surface-700 rounded-lg">
-					<summary class="cursor-pointer p-4 font-semibold flex justify-between items-center hover:bg-surface-300 dark:hover:bg-surface-600 rounded-lg transition-colors">
-						<span>prodigal</span>
-						<span class="transform transition-transform group-open:rotate-180">▼</span>
-					</summary>
-					<div class="p-4 pt-0 space-y-3">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Enabled</label>
-							<input type="checkbox" bind:checked={prodigalEnabled} class="checkbox" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Mode</label>
-							<select bind:value={prodigalMode} class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600">
-								<option value="meta">Meta</option>
-								<option value="single">Single</option>
-							</select>
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Closed Ends</label>
-							<input type="checkbox" bind:checked={prodigalClosedEnds} class="checkbox" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Translation Table</label>
-							<input type="number" bind:value={prodigalTransTable} min="1" max="25" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-					</div>
-				</details>
-
-				<!-- RAST -->
-				<details class="group bg-surface-200 dark:bg-surface-700 rounded-lg">
-					<summary class="cursor-pointer p-4 font-semibold flex justify-between items-center hover:bg-surface-300 dark:hover:bg-surface-600 rounded-lg transition-colors">
-						<span>RAST</span>
-						<span class="transform transition-transform group-open:rotate-180">▼</span>
-					</summary>
-					<div class="p-4 pt-0 space-y-3">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Enabled</label>
-							<input type="checkbox" bind:checked={rastEnabled} class="checkbox" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Domain</label>
-							<select bind:value={rastDomain} class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600">
-								<option value="Bacteria">Bacteria</option>
-								<option value="Archaea">Archaea</option>
-								<option value="Virus">Virus</option>
-							</select>
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Genetic Code</label>
-							<input type="number" bind:value={rastGeneticCode} min="1" max="25" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Fix Errors</label>
-							<input type="checkbox" bind:checked={rastFixErrors} class="checkbox" />
-						</div>
-					</div>
-				</details>
-
-				<!-- tigrfam -->
-				<details class="group bg-surface-200 dark:bg-surface-700 rounded-lg">
-					<summary class="cursor-pointer p-4 font-semibold flex justify-between items-center hover:bg-surface-300 dark:hover:bg-surface-600 rounded-lg transition-colors">
-						<span>tigrfam</span>
-						<span class="transform transition-transform group-open:rotate-180">▼</span>
-					</summary>
-					<div class="p-4 pt-0 space-y-3">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Enabled</label>
-							<input type="checkbox" bind:checked={tigrfamEnabled} class="checkbox" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">E-value Cutoff</label>
-							<input type="text" bind:value={tigrfamCutoff} placeholder="1e-5" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600 font-mono" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">Coverage Threshold</label>
-							<input type="number" bind:value={tigrfamCoverage} min="0" max="1" step="0.01" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-							<label class="text-sm font-semibold">HMMER Threads</label>
-							<input type="number" bind:value={tigrfamHmmerThreads} min="1" max="64" class="input px-3 py-2 rounded bg-surface-300 dark:bg-surface-600" />
-						</div>
-					</div>
-				</details>
-			</div>
-		</div>
-	</section>
-
-	<!-- Save Button -->
-	<div class="flex justify-center gap-4">
-		<button
-			class="btn variant-filled-primary btn-lg px-8"
-			on:click={saveProfile}
-		>
-			Save Changes
-		</button>
-		<button
-			class="btn variant-outline-secondary btn-lg px-8"
-		>
-			Cancel
-		</button>
-	</div>
-
-	<!-- Info Message -->
-	<div class="card p-4 bg-warning-500/10 border border-warning-500/30">
-		<p class="text-sm text-warning-700 dark:text-warning-300 text-center">
-			<strong>Note:</strong> All settings are placeholders and will be connected to the backend API in a future update.
+		<p class="text-lg text-surface-600 dark:text-surface-300">
+			Configuration from <code class="font-mono text-sm bg-surface-200 dark:bg-surface-700 px-2 py-1 rounded">ddeemer@negishi.rcac.purdue.edu</code>
 		</p>
-	</div>
+	</section>
+
+	{#if error}
+		<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{error}</div>
+	{/if}
+
+	{#if success}
+		<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">{success}</div>
+	{/if}
+
+	<!-- SSH Connection Status -->
+	<section class="card p-6 bg-surface-100 dark:bg-surface-800">
+		<h2 class="text-2xl font-bold mb-4 text-primary-500">SSH Connection</h2>
+		{#if checking}
+			<p class="text-surface-500">Checking connection...</p>
+		{:else if connected}
+			<div class="flex items-center gap-2">
+				<span class="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+				<span class="text-green-700 dark:text-green-400 font-semibold">Connected to negishi.rcac.purdue.edu</span>
+			</div>
+		{:else}
+			<div class="space-y-4">
+				<div class="flex items-center gap-2">
+					<span class="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+					<span class="text-red-700 dark:text-red-400 font-semibold">Not connected</span>
+				</div>
+				<div class="space-y-4">
+					<div>
+						<label for="sshUsername" class="block text-sm font-semibold mb-1">Username</label>
+						<input
+							id="sshUsername"
+							type="text"
+							bind:value={sshUsername}
+							placeholder="e.g., ddeemer"
+							class="input w-full px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600"
+						/>
+					</div>
+					<div>
+						<label for="sshPublicKey" class="block text-sm font-semibold mb-1">Public Key</label>
+						<textarea
+							id="sshPublicKey"
+							bind:value={sshPublicKey}
+							placeholder="Paste your public key here (e.g., ssh-rsa AAAA...)"
+							rows="4"
+							class="input w-full px-4 py-2 rounded-lg bg-surface-200 dark:bg-surface-700 border border-surface-300 dark:border-surface-600 font-mono text-sm"
+						></textarea>
+						<p class="text-xs text-surface-500 mt-1">Copy from <code class="font-mono">~/.ssh/id_rsa.pub</code> on your local machine</p>
+					</div>
+				</div>
+				<button type="button" onclick={connect} class="btn variant-filled-primary px-6 py-2">
+					Connect
+				</button>
+			</div>
+		{/if}
+	</section>
+
+	<!-- Config Section -->
+	{#if loading}
+		<section class="card p-6 bg-surface-100 dark:bg-surface-800 text-center">
+			<p class="text-surface-500">Loading configuration...</p>
+		</section>
+	{:else if connected && Object.keys(config).length > 0}
+		<section class="card p-6 bg-surface-100 dark:bg-surface-800">
+			<h2 class="text-2xl font-bold mb-6 text-primary-500">CONFIG</h2>
+
+			<div class="space-y-6">
+				{#each Object.entries(config) as [section, value]}
+					{#if isObject(value)}
+						<div class="bg-surface-200 dark:bg-surface-700 rounded-lg p-4">
+							<h3 class="text-xl font-semibold mb-4 text-secondary-500 border-b border-surface-300 dark:border-surface-600 pb-2">{section}</h3>
+							<div class="space-y-3">
+								{#each Object.entries(value) as [key, val]}
+									{#if isObject(val)}
+										<!-- Nested object (e.g., program settings) -->
+										<details class="group bg-surface-300 dark:bg-surface-600 rounded-lg">
+											<summary class="cursor-pointer p-3 font-semibold flex justify-between items-center hover:bg-surface-400 dark:hover:bg-surface-500 rounded-lg transition-colors">
+												<span>{key}</span>
+												<span class="transform transition-transform group-open:rotate-180">▼</span>
+											</summary>
+											<div class="p-3 pt-0 space-y-2">
+												{#each Object.entries(val) as [subKey, subVal]}
+													<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+														<label class="text-sm font-semibold font-mono">{subKey}</label>
+														{#if Array.isArray(subVal)}
+															<div class="flex flex-wrap gap-2 items-center">
+																{#each subVal as item, i}
+																	<span class="inline-flex items-center gap-1 bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 px-2 py-1 rounded font-mono text-sm">
+																		<input
+																			type="text"
+																			value={String(item)}
+																			oninput={(e) => { config[section][key][subKey][i] = e.currentTarget.value; }}
+																			class="bg-transparent border-none outline-none w-16 text-sm font-mono"
+																		/>
+																		<button type="button" onclick={() => removeItem(config[section][key][subKey], i)} class="text-primary-600 dark:text-primary-300 hover:text-red-500 font-bold">&times;</button>
+																	</span>
+																{/each}
+																<button type="button" onclick={() => addItem(config[section][key][subKey])} class="text-primary-500 hover:text-primary-700 text-xl font-bold leading-none">+</button>
+															</div>
+														{:else}
+															<input
+																type="text"
+																value={String(subVal ?? '')}
+																oninput={(e) => { config[section][key][subKey] = e.currentTarget.value; }}
+																class="input px-3 py-2 rounded bg-white dark:bg-surface-800 border border-surface-400 dark:border-surface-500 font-mono text-sm"
+															/>
+														{/if}
+													</div>
+												{/each}
+											</div>
+										</details>
+									{:else if Array.isArray(val)}
+										<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+											<label class="text-sm font-semibold font-mono">{key}</label>
+											<div class="flex flex-wrap gap-2 items-center">
+												{#each val as item, i}
+													<span class="inline-flex items-center gap-1 bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 px-2 py-1 rounded font-mono text-sm">
+														<input
+															type="text"
+															value={String(item)}
+															oninput={(e) => { config[section][key][i] = e.currentTarget.value; }}
+															class="bg-transparent border-none outline-none w-16 text-sm font-mono"
+														/>
+														<button type="button" onclick={() => removeItem(config[section][key], i)} class="text-primary-600 dark:text-primary-300 hover:text-red-500 font-bold">&times;</button>
+													</span>
+												{/each}
+												<button type="button" onclick={() => addItem(config[section][key])} class="text-primary-500 hover:text-primary-700 text-xl font-bold leading-none">+</button>
+											</div>
+										</div>
+									{:else}
+										<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+											<label class="text-sm font-semibold font-mono">{key}</label>
+											<input
+												type="text"
+												value={String(val ?? '')}
+												oninput={(e) => { config[section][key] = e.currentTarget.value; }}
+												class="input px-3 py-2 rounded bg-white dark:bg-surface-800 border border-surface-400 dark:border-surface-500 font-mono text-sm"
+											/>
+										</div>
+									{/if}
+								{/each}
+							</div>
+						</div>
+					{:else if Array.isArray(value)}
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+							<label class="text-sm font-semibold font-mono">{section}</label>
+							<div class="flex flex-wrap gap-2 items-center">
+								{#each value as item, i}
+									<span class="inline-flex items-center gap-1 bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 px-2 py-1 rounded font-mono text-sm">
+										<input
+											type="text"
+											value={String(item)}
+											oninput={(e) => { config[section][i] = e.currentTarget.value; }}
+											class="bg-transparent border-none outline-none w-16 text-sm font-mono"
+										/>
+										<button type="button" onclick={() => removeItem(config[section], i)} class="text-primary-600 dark:text-primary-300 hover:text-red-500 font-bold">&times;</button>
+									</span>
+								{/each}
+								<button type="button" onclick={() => addItem(config[section])} class="text-primary-500 hover:text-primary-700 text-xl font-bold leading-none">+</button>
+							</div>
+						</div>
+					{:else}
+						<!-- Top-level scalar -->
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+							<label class="text-sm font-semibold font-mono">{section}</label>
+							<input
+								type="text"
+								value={String(value ?? '')}
+								oninput={(e) => { config[section] = e.currentTarget.value; }}
+								class="input px-3 py-2 rounded bg-white dark:bg-surface-800 border border-surface-400 dark:border-surface-500 font-mono text-sm"
+							/>
+						</div>
+					{/if}
+				{/each}
+			</div>
+
+			<div class="flex justify-center mt-8">
+				<button
+					type="button"
+					onclick={saveConfig}
+					disabled={saving}
+					class="btn variant-filled-primary btn-lg px-8 py-2"
+				>
+					{saving ? 'Saving...' : 'Save Configuration'}
+				</button>
+			</div>
+		</section>
+	{:else if connected}
+		<section class="card p-6 bg-surface-100 dark:bg-surface-800 text-center">
+			<p class="text-surface-500">No configuration found. Check that <code class="font-mono text-sm">~/.config/bioinformatics-tools/config.yaml</code> exists on negishi.</p>
+		</section>
+	{/if}
 </div>

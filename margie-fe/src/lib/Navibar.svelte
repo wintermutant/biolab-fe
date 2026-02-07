@@ -63,7 +63,10 @@
 				<p class="text-lg font-semibold">File Search</p>
 			</a>
 			<a href="/run_script" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
-				<p class="text-lg font-semibold">Run Script</p>
+				<p class="text-lg font-semibold">Run Slurm</p>
+			</a>
+			<a href="/run_ssh" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Run SSH</p>
 			</a>
 
 			<div class="border-t border-surface-300 dark:border-surface-600 my-2"></div>
@@ -80,9 +83,9 @@
 			<a href="/methods" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
 				<p class="text-lg font-semibold">Methods</p>
 			</a>
-			<a href="/contributors" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+			<!-- <a href="/contributors" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
 				<p class="text-lg font-semibold">Contributors</p>
-			</a>
+			</a> -->
 			<a href="/dane" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
 				<p class="text-lg font-semibold">Dane</p>
 			</a>

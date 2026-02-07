@@ -23,7 +23,7 @@
 			error = '';
 			result = null;
 
-			const response = await fetch(`${API_URL}/v1/example/run_slurm`, {
+			const response = await fetch(`${API_URL}/v1/ssh/run_slurm`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

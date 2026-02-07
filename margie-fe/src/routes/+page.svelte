@@ -56,19 +56,19 @@
 
 <div class="container mx-auto p-8 space-y-8">
 	<!-- Hero Section -->
-	<section class="text-center py-12">
+	<!-- <section class="text-center py-12">
 		<h1 class="text-5xl font-bold text-primary-500 mb-4">MARGIE</h1>
 		<p class="text-2xl text-secondary-500 font-semibold mb-2">Mostly Automated & Rapid Genome Intelligence Engine</p>
 		<p class="text-lg text-surface-600 dark:text-surface-300 mb-8">Upload your genome files for rapid analysis and insights</p>
-	</section>
+	</section> -->
 
 	<!-- File Upload Section -->
-	<section class="max-w-4xl mx-auto">
+	<!-- <section class="max-w-4xl mx-auto">
 		<div class="card p-8 bg-surface-100 dark:bg-surface-800">
-			<h2 class="text-2xl font-bold mb-6 text-center">Upload Genome Files</h2>
+			<h2 class="text-2xl font-bold mb-6 text-center">Upload Genome Files</h2> -->
 
 			<!-- Drag & Drop Zone -->
-			<div
+			<!-- <div
 				class="border-4 border-dashed rounded-lg p-12 text-center transition-colors {isDragging ? 'border-primary-500 bg-primary-100 dark:bg-primary-900/20' : 'border-surface-400 dark:border-surface-600'}"
 				on:dragover={handleDragOver}
 				on:dragleave={handleDragLeave}
@@ -88,10 +88,10 @@
 					Browse Files
 				</label>
 				<p class="text-sm text-surface-500 mt-4">Supported formats: FASTA, FASTQ, GenBank</p>
-			</div>
+			</div> -->
 
 			<!-- Selected Files Display -->
-			{#if files && files.length > 0}
+			<!-- {#if files && files.length > 0}
 				<div class="mt-6">
 					<h3 class="font-semibold mb-3">Selected Files ({files.length}):</h3>
 					<div class="space-y-2">
@@ -103,10 +103,10 @@
 						{/each}
 					</div>
 				</div>
-			{/if}
+			{/if} -->
 
 			<!-- Submit Button -->
-			<div class="mt-6 text-center text-primary-600">
+			<!-- <div class="mt-6 text-center text-primary-600">
 				<button
 					class="btn variant-filled-primary btn-lg"
 					disabled={!files || files.length === 0}
@@ -116,7 +116,7 @@
 				</button>
 			</div>
 		</div>
-	</section>
+	</section> -->
 
 	<!-- Analysis Tools Section -->
 	<section>

@@ -2,8 +2,6 @@
 	import Navibar from "$lib/Navibar.svelte";
 </script>
 
-<Navibar/>
-
 <div class="container mx-auto p-8 space-y-8 max-w-4xl">
 	<!-- Page Header -->
 	<section class="text-center py-8">

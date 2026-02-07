@@ -16,7 +16,7 @@
 		try {
 			loading = true;
 			error = '';
-			const response = await fetch(`${API_URL}/v1/example/all_genomes?path=${encodeURIComponent(searchPath)}`);
+			const response = await fetch(`${API_URL}/v1/ssh/all_genomes?path=${encodeURIComponent(searchPath)}`);
 			if (!response.ok) throw new Error('Failed to fetch files');
 			const data = await response.json();
 			entries = data.Genomes;

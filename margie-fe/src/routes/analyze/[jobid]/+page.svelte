@@ -21,7 +21,7 @@
 			loading = true;
 			error = '';
 
-			const response = await fetch(`${API_URL}/v1/example/job_status/${jobId}/stream`, {
+			const response = await fetch(`${API_URL}/v1/ssh/job_status/${jobId}/stream`, {
 				signal
 			});
 
