@@ -7,6 +7,7 @@
 		: ''; // Production: use relative URL (same domain)
 
 	let genomePath = $state('');
+	let outputDir = $state('/home/ddeemer');
 	let computeLocation = $state<'negishi' | 'local' | 'anvil'>('negishi');
 	let loading = $state(false);
 	let error = $state('');
@@ -28,6 +29,7 @@
 				},
 				body: JSON.stringify({
 					genome_path: genomePath,
+					output_dir: outputDir,
 				}),
 			});
 
@@ -67,6 +69,18 @@
 			placeholder="Enter genome file path..."
 			class="w-full px-4 py-2 rounded border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-900"
 		/>
+	</div>
+
+	<!-- Output Directory -->
+	<div class="card p-6 bg-surface-100 dark:bg-surface-800 mb-8">
+		<h2 class="text-2xl font-semibold mb-4">Output Directory</h2>
+		<input
+			type="text"
+			bind:value={outputDir}
+			placeholder="/home/ddeemer"
+			class="w-full px-4 py-2 rounded border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-900"
+		/>
+		<p class="text-sm text-surface-500 mt-2">Directory where results will be saved. Defaults to /home/ddeemer</p>
 	</div>
 
 	<!-- Compute Location and Analyze Button -->
