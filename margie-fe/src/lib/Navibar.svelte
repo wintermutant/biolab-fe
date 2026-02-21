@@ -1,14 +1,15 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto, afterNavigate } from '$app/navigation';
   import { Calendar, CircleUser, LogOut, Menu, X } from 'lucide-svelte';
   import { AppBar } from '@skeletonlabs/skeleton-svelte';
   import { isLoggedIn, clearToken } from '$lib/auth.js';
 
-  let drawerOpen = false;
+  let drawerOpen = $state(false);
   let loggedIn = $state(false);
 
-  onMount(() => {
+  // Re-check on every navigation (including the redirect after login).
+  // afterNavigate also fires on first mount, replacing the need for onMount.
+  afterNavigate(() => {
     loggedIn = isLoggedIn();
   });
 
