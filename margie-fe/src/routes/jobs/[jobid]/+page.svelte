@@ -181,12 +181,14 @@
 
 	function getSlurmStatusColor(status: string): string {
 		switch (status) {
-			case 'COMPLETED': case 'COMPLETING': return 'text-green-500';
+			case 'COMPLETED': return 'text-green-500';
+			case 'COMPLETING': return 'text-cyan-500';
 			case 'RUNNING': return 'text-blue-500';
 			case 'PENDING': return 'text-yellow-500';
 			case 'SUBMITTED': return 'text-yellow-500';
 			case 'FAILED': return 'text-red-500';
 			case 'CANCELLED': return 'text-gray-500';
+			case 'CACHED': return 'text-purple-500';
 			default: return 'text-surface-500';
 		}
 	}
@@ -384,7 +386,7 @@
 		{#if job.steps_total}
 			<section class="card p-6 bg-surface-100 dark:bg-surface-800">
 				<div class="flex items-center justify-between mb-3">
-					<h2 class="text-xl font-semibold">MARGIE Workflow Progress</h2>
+					<h2 class="text-xl font-semibold">Workflow Progress</h2>
 					<span class="text-sm font-mono text-surface-500">{job.steps_done} / {job.steps_total} steps</span>
 				</div>
 				<div class="w-full bg-surface-300 dark:bg-surface-600 rounded-full h-3">

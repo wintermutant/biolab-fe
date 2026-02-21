@@ -49,7 +49,13 @@
 </script>
 
 <div class="container mx-auto p-8 max-w-2xl">
-	<h1 class="text-4xl font-bold mb-8 text-center text-secondary-500">SSH Job Submission</h1>
+	<h1 class="text-4xl font-bold mb-8 text-center text-secondary-500">Run SSH</h1>
+
+	<div class="bg-surface-200 dark:bg-surface-700 border-l-4 border-secondary-500 p-4 rounded mb-6">
+		<p class="text-sm text-surface-600 dark:text-surface-300">
+			This will run your script via SSH tunneling onto your remote server on the login node.
+		</p>
+	</div>
 
 	{#if error}
 		<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -89,5 +95,13 @@
 				{loading ? 'Submitting...' : 'Submit Job'}
 			</button>
 		</form>
+	</div>
+
+	<!-- Output Box -->
+	<div class="mt-6">
+		<h2 class="text-lg font-semibold mb-2">Output</h2>
+		<div class="rounded bg-black p-4 min-h-[200px] font-mono text-sm">
+			<p class="text-green-500 opacity-60">Not wired up yet</p>
+		</div>
 	</div>
 </div>
