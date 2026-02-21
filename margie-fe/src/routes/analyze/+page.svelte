@@ -10,7 +10,31 @@
 	let outputDir = $state('/home/ddeemer');
 	let computeLocation = $state<'negishi' | 'local' | 'anvil'>('negishi');
 	let loading = $state(false);
+	let quickLoading = $state(false);
+	let freshLoading = $state(false);
 	let error = $state('');
+
+	async function runWorkflow(endpoint: string, setLoading: (v: boolean) => void) {
+		try {
+			setLoading(true);
+			error = '';
+			const response = await fetch(`${API_URL}/v1/workflows/${endpoint}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+			});
+			if (!response.ok) throw new Error(`Failed to run ${endpoint}`);
+			const data = await response.json();
+			console.log(`${endpoint} result:`, data);
+
+			if (data.job_id) {
+				goto(`/jobs/${data.job_id}`);
+			}
+		} catch (e) {
+			error = e instanceof Error ? e.message : `Failed to run ${endpoint}`;
+		} finally {
+			setLoading(false);
+		}
+	}
 
 	async function handleAnalyze() {
 		if (!genomePath.trim()) {
@@ -94,5 +118,29 @@
 		>
 			{loading ? 'Starting Analysis...' : 'Analyze'}
 		</button>
+	</div>
+
+	<!-- Quick Workflows -->
+	<div class="card p-6 bg-surface-100 dark:bg-surface-800 mt-8">
+		<h2 class="text-2xl font-semibold mb-4">Quick Workflows</h2>
+		<p class="text-sm text-surface-500 mb-4">Touch-only workflows on Negishi — tests SSH, snakemake, and DB cache pipeline (no containers).</p>
+		<div class="flex gap-4">
+			<button
+				type="button"
+				onclick={() => runWorkflow('run_quick_example', (v) => quickLoading = v)}
+				disabled={quickLoading}
+				class="btn px-6 py-2 text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+			>
+				{quickLoading ? 'Running...' : 'Quick Example'}
+			</button>
+			<button
+				type="button"
+				onclick={() => runWorkflow('run_fresh_test', (v) => freshLoading = v)}
+				disabled={freshLoading}
+				class="btn px-6 py-2 text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50"
+			>
+				{freshLoading ? 'Running...' : 'Fresh Test'}
+			</button>
+		</div>
 	</div>
 </div>
