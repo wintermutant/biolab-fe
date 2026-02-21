@@ -21,7 +21,7 @@
 			</button>
 		</AppBar.Lead>
 		<AppBar.Headline>
-			<a href="/" class="text-2xl font-bold hover:text-primary-600 transition-colors cursor-pointer">MARGIE</a>
+			<a href="/" class="text-2xl font-bold hover:text-primary-600 transition-colors cursor-pointer">Bioinformatics Supercomputing Platform</a>
 		</AppBar.Headline>
 		<AppBar.Trail>
 			<a href="/profile/" class="btn-icon hover:preset-tonal"><CircleUser class="size-6" /></a>
@@ -80,6 +80,9 @@
 
 			<div class="border-t border-surface-300 dark:border-surface-600 my-2"></div>
 
+			<a href="/roadmap" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
+				<p class="text-lg font-semibold">Roadmap</p>
+			</a>
 			<a href="/methods" class="block p-4 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 transition-colors" on:click={closeDrawer}>
 				<p class="text-lg font-semibold">Methods</p>
 			</a>
