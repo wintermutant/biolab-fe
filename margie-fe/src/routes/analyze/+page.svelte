@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { authHeaders, clearToken } from '$lib/auth.js';
 
-	// Use relative URL so it works in both dev and production
 	const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-		? 'http://localhost:8000' // Dev: connect to local backend
-		: ''; // Production: use relative URL (same domain)
+		? 'http://localhost:8000'
+		: '';
+
+	function handle401() { clearToken(); goto('/login'); }
 
 	let genomePath = $state('');
 	let outputDir = $state('/home/ddeemer');
@@ -20,8 +22,9 @@
 			error = '';
 			const response = await fetch(`${API_URL}/v1/workflows/${endpoint}`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 			});
+			if (response.status === 401) { handle401(); return; }
 			if (!response.ok) throw new Error(`Failed to run ${endpoint}`);
 			const data = await response.json();
 			console.log(`${endpoint} result:`, data);
@@ -48,21 +51,19 @@
 
 			const response = await fetch(`${API_URL}/v1/ssh/run_margie`, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: authHeaders(),
 				body: JSON.stringify({
 					genome_path: genomePath,
 					output_dir: outputDir,
 				}),
 			});
 
+			if (response.status === 401) { handle401(); return; }
 			if (!response.ok) throw new Error('Failed to start analysis');
 
 			const data = await response.json();
 			console.log('Analysis started:', data);
 
-			// Redirect to job monitoring page
 			if (data.job_id) {
 				goto(`/jobs/${data.job_id}`);
 			}
